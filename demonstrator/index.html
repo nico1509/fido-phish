@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web USB Playground</title>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+    <h1>Web USB Playground</h1>
+    
+    <div class="control_container">
+        <button id="btn_list" class="btn">List Devices</button>
+        <button id="btn_request" class="btn">Request Device</button>
+    </div>
+    
+    <h2>Devices</h2>
+    <div class="devices_container">
+        <div class="device">USB</div>
+    </div>
+
+    <h2>Log</h2>
+    <div class="log_container">
+        <div class="log">Sample entry</div>
+        <div class="log error">Sample error</div>
+    </div>
+
+    <div class="modal_backdrop">
+        <div class="modal">
+            <div class="modal_head">
+                <button id="btn_close" class="btn btn--close">&times;</button>
+                <h3 class="modal_title">Modal content</h3>
+            </div>
+            <div class="modal_content">
+                <div class="files_container">
+                    <div class="file">Example File</div>
+                    <div class="file">Example File</div>
+                    <div class="file">Example File</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/index.js"></script>
+</body>
+</html>
