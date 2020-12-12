@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web USB Playground</title>
+    <title>Yubikey WebUSB Demonstrator</title>
     <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-    <h1>Web USB Playground</h1>
+    <h1>Yubikey WebUSB Demonstrator</h1>
     
     <div class="control_container">
-        <button id="btn_list" class="btn">List Devices</button>
-        <button id="btn_request" class="btn">Request Device</button>
+        <button id="btn_request" class="btn">Request Yubikey</button>
+        <button id="btn_requestandgo" class="btn btn--secondary">Request and go to google.com</button>
     </div>
     
     <h2>Devices</h2>
@@ -19,23 +19,24 @@
         <div class="device">USB</div>
     </div>
 
-    <h2>Log</h2>
+    <h2>Logs</h2>
+    <div class="control_container">
+        <button id="btn_clearlogs" class="btn">Clear Logs</button>
+    </div>
     <div class="log_container">
         <div class="log">Sample entry</div>
         <div class="log error">Sample error</div>
     </div>
 
-    <div class="modal_backdrop">
+    <div id="modal_device" class="modal_backdrop" style="display: none;">
         <div class="modal">
             <div class="modal_head">
-                <button id="btn_close" class="btn btn--close">&times;</button>
                 <h3 class="modal_title">Modal content</h3>
+                <button id="btn_closedevice" class="btn btn--borderless">&times;</button>
             </div>
             <div class="modal_content">
                 <div class="files_container">
-                    <div class="file">Example File</div>
-                    <div class="file">Example File</div>
-                    <div class="file">Example File</div>
+                    <div class="file">Error</div>
                 </div>
             </div>
         </div>
