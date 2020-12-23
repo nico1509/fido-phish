@@ -8,7 +8,7 @@ body {
     padding-bottom: 5px;
 }
 .log.error {
-    color: rgb(255, 136, 0);
+    color: rgb(255, 102, 0);
 }
 .log.success {
     color: rgb(0, 98, 255);
@@ -50,7 +50,7 @@ body {
 .btn:hover {
     background-color: lightgray;
 }
-.btn:active, .btn:focus {
+.btn:active {
     background-color: gray;
 }
 .btn--borderless {

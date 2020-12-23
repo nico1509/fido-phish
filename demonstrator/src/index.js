@@ -1,10 +1,13 @@
 const devicesContainer = document.querySelector('.devices_container');
-const logContainer = document.querySelector('.log_container');
 const btn_request = document.getElementById('btn_request');
 const btn_requestandgo = document.getElementById('btn_requestandgo');
-const btn_clearlogs = document.getElementById('btn_clearlogs');
-const modal_device = document.getElementById('modal_device');
-const btn_closedevice = document.getElementById('btn_closedevice');
+
+// Show error in unsupported browsers
+if (!navigator.usb) {
+    writeToLogSection('This browser does not support WebUSB, use a chromium-based browser instead.', 'error');
+    //navigator.usb = {};
+}
+
 
 // Request device access
 [ btn_request, btn_requestandgo ].forEach( btn => {
@@ -12,18 +15,23 @@ const btn_closedevice = document.getElementById('btn_closedevice');
         let device;
         try {
             writeToLogSection('Request Devices');
-            device = await navigator.usb.requestDevice({filters: [{
-                // Filter for our Yubikey (Yubikey Touch U2F Security Key)
-                vendorId: 0x1050,
-                productId: 0x0120,
-            }]});
+            device = await navigator.usb.requestDevice({filters: [
+                {
+                    // Filter for Touch U2F Security Key
+                    vendorId: 0x1050, productId: 0x0120,
+                },
+                {
+                    // Filter for Yubikey
+                    vendorId: 0x1050, productId: 0x0407,
+                },
+            ]});
         } catch (err) {
-            writeToLogSection('Request failed: ' + err, true);
+            writeToLogSection('Request failed: ' + err, 'error');
             return;
         }
     
         if (device === undefined) {
-            writeToLogSection('No Device', true);
+            writeToLogSection('No Device', 'error');
             return;
         }
     
@@ -42,6 +50,8 @@ btn_requestandgo.addEventListener('click', async () => {
 // List accesible devices
 devicesContainer.innerHTML = '';
 async function listDevices() {
+    if (!navigator.usb) return;
+
     let devices = await navigator.usb.getDevices();
     devicesContainer.innerHTML = '';
     devices.forEach(device => {
@@ -65,15 +75,7 @@ async function showDeviceModal(device) {
 // Mess with the device
 async function messWithDevice(device) {
     
-    device.controlTransferOut({
-        requestType: 'standard',
-        recipient: 'device',
-        request: 0x06,
-        value: 0x0100,
-        index: 0x0000}
-    ).then(result => {
-        console.log(result);
-    });
+    
 
     writeToLogSection('Attempting Device Claim');
     
@@ -82,29 +84,15 @@ async function messWithDevice(device) {
         await device.selectConfiguration(1);
         await device.claimInterface(0);
         await device.selectAlternateInterface(0, 0);
+        writeToLogSection('Claim Successful' + (device.opened ? ', device opened' : ''), 'success');
     } catch (e) {
-        writeToLogSection('Cannot claim device: ' + e, true);
+        writeToLogSection('Cannot claim device: ' + e, 'error');
     } finally {
-        writeToLogSection('Logged device to console');
         console.log(device);
+        device.close();
+        writeToLogSection('Logged device to console, closing device');
     }
 }
-
-// Log
-function clearLogs() {
-    logContainer.innerHTML = '';
-}
-function writeToLogSection(message = '', error = false) {
-    const classes = error ? 'log error' : 'log';
-    logContainer.innerHTML += `<div class="${classes}">${new Date()} <br> &rightarrow; ${message}</div>`;
-}
-if (!navigator.usb) {
-    writeToLogSection('This browser does not support WebUSB, use a chromium-based browser instead.', true)
-}
-btn_clearlogs.addEventListener('click', async () => {
-    clearLogs();
-})
-clearLogs();
 
 // Events
 navigator.usb.addEventListener('connect', async ({device}) => {
@@ -117,24 +105,6 @@ navigator.usb.addEventListener('disconnect', async ({device}) => {
 });
 
 
-// Initialize: List Devices
+// Initialize
+clearLogs();
 listDevices();
-
-
-/*
-    UI STUFF
-    just plain UI code without relevant device logic
-*/
-function addDeviceModalBehaviour() {
-    [ btn_closedevice, modal_device ].forEach(element => {
-        element.addEventListener('click', async (event) => {
-            modal_device.style.display = 'none';
-        });
-        element.childNodes.forEach(child => {
-            child.addEventListener('click', (childEvent) => {
-                childEvent.stopPropagation();
-            });
-        });
-    });
-}
-addDeviceModalBehaviour();
