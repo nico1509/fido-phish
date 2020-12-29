@@ -25,12 +25,16 @@
                 <h3 class="modal_title">Modal content</h3>
                 <button id="btn_closedevice" class="btn btn--borderless">&times;</button>
             </div>
-            <div class="modal_content">
-                <div class="files_container">
-                    <div class="file">Error</div>
+            <div class="modal_content">   
+                <div class="device_response_container">
+                    <p class="device_response">...</p>
                 </div>
-            </div>
-        </div>
+                <div class="device_request_container">
+                    <input id="input_sendhex" type="text" placeholder="Input Hex, whitespace is okay...">
+                    <button id="btn_sendhex" class="btn">Send</button>
+                </div>
+	    </div>
+	</div>
     </div>
 
     <h1>WebAuthn Demonstrator</h1>
@@ -50,6 +54,7 @@
 
 
     <script src="src/lib/base64.js"></script>
+    <script src="src/lib/browser-buffer.js"></script>
     <script src="src/util.js"></script>
     <script src="src/index.js"></script>
     <script src="src/webauth.js"></script>

@@ -1,6 +1,9 @@
 const devicesContainer = document.querySelector('.devices_container');
 const btn_request = document.getElementById('btn_request');
 const btn_requestandgo = document.getElementById('btn_requestandgo');
+const device_response_container = document.querySelector('.device_response_container');
+const btn_sendhex = document.getElementById('btn_sendhex');
+const input_sendhex = document.getElementById('input_sendhex');
 
 // Show error in unsupported browsers
 if (!navigator.usb) {
@@ -59,6 +62,20 @@ async function listDevices() {
         devicesContainer.lastChild.addEventListener('click', e => {
             showDeviceModal(device);
         });
+        btn_sendhex.addEventListener('click', e => {    
+            input_sendhex.value = input_sendhex.value.replace(/\s/g, '');
+            talkToDevice(device, input_sendhex.value);      
+        });
+        [ btn_closedevice, modal_device ].forEach(element => {
+            element.addEventListener('click', async (event) => {
+                device.close().then(() => {
+                    writeToLogSection('Device closed');
+                }).catch(e => {
+                    console.error(e);
+                    writeToLogSection('Cannot close device: ' + e, 'error');
+                });
+            });
+        });
     });    
 }
 
@@ -66,31 +83,67 @@ async function listDevices() {
 async function showDeviceModal(device) {
     modal_device.style.display = '';
     modal_device.getElementsByClassName('modal_title')[0].innerHTML = device.productName;
-    modal_device.getElementsByClassName('modal_content')[0].innerHTML = `
-        <pre>${JSON.stringify(device.configurations)}</pre>
-    `;
-    messWithDevice(device);
+    claimDevice(device).then(async () => {
+        device_response_container.innerHTML += '<p class="device_response">Device claimed</p>';
+        while (true) {
+            let result = await device.transferIn(2, 65); // FIXME: 65 is just a guess...
+            if (result.data) {
+                const asciiResult = hex2ascii(uint8array2hex(new Uint8Array(result.data.buffer)));
+                device_response_container.innerHTML +=`<p class="device_response">Device wrote: ${asciiResult}</p>`;
+            }
+            if (result.status === 'stall') {
+                console.warn('Endpoint stalled. Clearing.');
+                await device.clearHalt(1);
+            }
+        }
+    });
+}
+
+async function talkToDevice(device, hex) {
+    const message = hex2uint8array(hex);
+    device_response_container.innerHTML +=`<p class="device_response">You wrote: ${hex2ascii(hex)}</p>`;
+    let outResult = await device.transferOut(2, message);
+    window.YubiKeyOutResult = outResult;
 }
 
 // Mess with the device
-async function messWithDevice(device) {
-    
-    
-
+async function claimDevice(device) {
     writeToLogSection('Attempting Device Claim');
     
     try {
-        await device.open();
-        await device.selectConfiguration(1);
-        await device.claimInterface(0);
-        await device.selectAlternateInterface(0, 0);
-        writeToLogSection('Claim Successful' + (device.opened ? ', device opened' : ''), 'success');
+        await device.open().then(() => {
+            return device.controlTransferIn({
+                //GET_DESCRIPTOR always uses bmRequestType 10000000B = requestType:"standard",recipient: "device"
+                requestType: "standard",  //"standard","class","vendor"
+                recipient: "device",      //"device","interface","endpoint","other"
+                request: 0x06,            //0x06 GET_DESCRIPTOR
+                value: 0x0200,            //descriptor type,descriptor index.
+                                          //Types:1:device,2:configuration,4:interface,5:endpoint.
+                                          //Word length, little endian order of bytes.
+                                          //Avoid decimals, because of different byte order.
+                index: 0x0000             //zero or language id
+            }, 4096).then((inResult) => {
+                console.log(inResult);
+	    });
+	});
+	await device.selectConfiguration(1).then(()=>{ //almost always 1. Windows takes first configuration only.
+            return device.claimInterface(2).then(() => { //contine after either .then or .error
+              //failing claim indicates interface in use
+              return device.selectAlternateInterface(2,0).then(()=>{
+                return device.reset();
+              });
+            });
+          });
+	writeToLogSection('Claim Successful' + (device.opened ? ', device opened' : ''), 'success');
     } catch (e) {
         writeToLogSection('Cannot claim device: ' + e, 'error');
+	console.error(e);
     } finally {
         console.log(device);
-        device.close();
-        writeToLogSection('Logged device to console, closing device');
+	window.YubiKey = device;
+	return Promise.resolve();
+        //device.close();
+        //writeToLogSection('Logged device to console, closing device');
     }
 }
 

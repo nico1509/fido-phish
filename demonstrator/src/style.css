@@ -38,6 +38,24 @@ body {
     justify-content: space-between;
 }
 
+.device_response_container {
+    font-family: monospace;
+    border: 2px solid black;
+    width: 100%;
+    height: 100%;
+    margin-bottom: 16px;
+}
+
+.device_request_container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+#input_sendhex {
+    width: 100%;
+}
+
 .btn {
     transition: background-color linear 0.1s;
     padding: 5px;
