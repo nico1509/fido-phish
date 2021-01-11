@@ -5,6 +5,29 @@ const device_response_container = document.querySelector('.device_response_conta
 const btn_sendhex = document.getElementById('btn_sendhex');
 const input_sendhex = document.getElementById('input_sendhex');
 
+window.DEVICE_TYPES = {
+    'security-key': {
+        vendorId: 0x1050,
+        productId: 0x0120,
+        configurationValue: 1,
+        interfaceNumber: 0,
+        alternateSetting: 0,
+        endpointNumberIn: 4,
+        endpointNumberOut: 4,
+    },
+    'yubi-key': {
+        vendorId: 0x1050,
+        productId: 0x0407,
+        configurationValue: 1,
+        interfaceNumber: 2,
+        alternateSetting: 0,
+        endpointNumberIn: 2,
+        endpointNumberOut: 2,
+    },
+};
+
+window.CURRENT_DEVICE_TYPE = {};
+
 // Show error in unsupported browsers
 if (!navigator.usb) {
     writeToLogSection('This browser does not support WebUSB, use a chromium-based browser instead.', 'error');
@@ -21,11 +44,13 @@ if (!navigator.usb) {
             device = await navigator.usb.requestDevice({filters: [
                 {
                     // Filter for Touch U2F Security Key
-                    vendorId: 0x1050, productId: 0x0120,
+                    vendorId: window.DEVICE_TYPES['security-key'].vendorId, 
+                    productId: window.DEVICE_TYPES['security-key'].productId,
                 },
                 {
                     // Filter for Yubikey
-                    vendorId: 0x1050, productId: 0x0407,
+                    vendorId: window.DEVICE_TYPES['yubi-key'].vendorId, 
+                    productId: window.DEVICE_TYPES['yubi-key'].productId,
                 },
             ]});
         } catch (err) {
@@ -36,6 +61,20 @@ if (!navigator.usb) {
         if (device === undefined) {
             writeToLogSection('No Device', 'error');
             return;
+        }
+
+        switch (device.productId) {
+            case 288:
+                window.CURRENT_DEVICE_TYPE = window.DEVICE_TYPES['security-key'];
+                break;
+
+            case 1031:
+                window.CURRENT_DEVICE_TYPE = window.DEVICE_TYPES['yubi-key'];
+                break;
+            
+            default:
+                writeToLogSection('Error: Device is neither a Security Key nor YubiKey. Demo will not work.', 'error')
+                break;
         }
     
         writeToLogSection('Request permitted');
@@ -86,7 +125,7 @@ async function showDeviceModal(device) {
     claimDevice(device).then(async () => {
         device_response_container.innerHTML += '<p class="device_response">Device claimed</p>';
         while (true) {
-            let result = await device.transferIn(2, 65); // FIXME: 65 is just a guess...
+            let result = await device.transferIn(window.CURRENT_DEVICE_TYPE.endpointNumberIn, 65); // FIXME: 65 is just a guess...
             if (result.data) {
                 const asciiResult = hex2ascii(uint8array2hex(new Uint8Array(result.data.buffer)));
                 device_response_container.innerHTML +=`<p class="device_response">Device wrote: ${asciiResult}</p>`;
@@ -102,7 +141,7 @@ async function showDeviceModal(device) {
 async function talkToDevice(device, hex) {
     const message = hex2uint8array(hex);
     device_response_container.innerHTML +=`<p class="device_response">You wrote: ${hex2ascii(hex)}</p>`;
-    let outResult = await device.transferOut(2, message);
+    let outResult = await device.transferOut(window.CURRENT_DEVICE_TYPE.endpointNumberOut, message);
     window.YubiKeyOutResult = outResult;
 }
 
@@ -126,11 +165,14 @@ async function claimDevice(device) {
                 console.log(inResult);
 	    });
 	});
-	await device.selectConfiguration(1).then(()=>{ //almost always 1. Windows takes first configuration only.
-            return device.claimInterface(2).then(() => { //contine after either .then or .error
+	await device.selectConfiguration(window.CURRENT_DEVICE_TYPE.configurationValue).then(()=>{ //almost always 1. Windows takes first configuration only.
+            return device.claimInterface(window.CURRENT_DEVICE_TYPE.interfaceNumber).then(() => { //contine after either .then or .error
               //failing claim indicates interface in use
-              return device.selectAlternateInterface(2,0).then(()=>{
-                return device.reset();
+              return device.selectAlternateInterface(
+                  window.CURRENT_DEVICE_TYPE.interfaceNumber,
+                  window.CURRENT_DEVICE_TYPE.alternateSetting
+              ).then(()=>{
+                  return device.reset();
               });
             });
           });
