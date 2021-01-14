@@ -127,8 +127,9 @@ async function showDeviceModal(device) {
         while (true) {
             let result = await device.transferIn(window.CURRENT_DEVICE_TYPE.endpointNumberIn, 65); // FIXME: 65 is just a guess...
             if (result.data) {
-                const asciiResult = hex2ascii(uint8array2hex(new Uint8Array(result.data.buffer)));
-                device_response_container.innerHTML +=`<p class="device_response">Device wrote: ${asciiResult}</p>`;
+                const hexResult = uint8array2hex(new Uint8Array(result.data.buffer));
+                const asciiResult = hex2ascii(hexResult);
+                device_response_container.innerHTML +=`<p class="device_response">Device wrote: ${asciiResult} (${hexResult})</p>`;
             }
             if (result.status === 'stall') {
                 console.warn('Endpoint stalled. Clearing.');
@@ -140,7 +141,7 @@ async function showDeviceModal(device) {
 
 async function talkToDevice(device, hex) {
     const message = hex2uint8array(hex);
-    device_response_container.innerHTML +=`<p class="device_response">You wrote: ${hex2ascii(hex)}</p>`;
+    device_response_container.innerHTML +=`<p class="device_response">You wrote: ${hex2ascii(hex)} (${hex})</p>`;
     let outResult = await device.transferOut(window.CURRENT_DEVICE_TYPE.endpointNumberOut, message);
     window.YubiKeyOutResult = outResult;
 }
