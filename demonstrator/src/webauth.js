@@ -1,11 +1,11 @@
-let _keyId = '';
+let _keyId = ''
 
 export default {
     async get() {
         if (_keyId === '') {
-            return Promise.reject('Key is not registered');
+            return Promise.reject('Key is not registered')
         }
-        
+
         try {
             const response = await navigator.credentials.get({
                 publicKey: {
@@ -19,15 +19,15 @@ export default {
                     timeout: 5000,
                     userVerification: "discouraged",
                 }
-            });
+            })
             console.log(response)
-            return Promise.resolve();
+            return Promise.resolve()
         } catch (e) {
             console.error(e)
-            return Promise.reject(e);
+            return Promise.reject(e)
         }
     },
-    
+
     async register() {
         let request = {
             "publicKey": {
@@ -62,13 +62,13 @@ export default {
         }
 
         try {
-            let response = await navigator.credentials.create(request);
-            _keyId = response.rawId;
-            console.log(_keyId);
-            return Promise.resolve(response.id);
+            let response = await navigator.credentials.create(request)
+            _keyId = response.rawId
+            console.log(_keyId)
+            return Promise.resolve(response.id)
         } catch (e) {
-            return Promise.reject(e);
+            return Promise.reject(e)
         }
     },
-    
-};
+
+}

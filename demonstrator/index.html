@@ -1,25 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yubikey WebUSB Demonstrator</title>
     <link rel="stylesheet" href="src/style.css">
 </head>
+
 <body>
     <h1>Yubikey WebUSB Demonstrator</h1>
-    
+
     <div class="control_container">
         <button id="btn_request" class="btn">Connect to device</button>
-        <button id="btn_requestandgo" class="btn btn--secondary" style="display: none;">Request and go to google.com</button>
+        <button id="btn_requestandgo" class="btn btn--secondary" style="display: none;">Request and go to
+            google.com</button>
     </div>
-    
+
     <div id="modal_device" style="display: none;">
         <div class="modal">
             <div class="modal_head">
                 <h2 class="modal_title">Modal content</h2>
             </div>
-            <div class="modal_content">   
+            <div class="modal_content">
                 <div class="device_response_container">
                     <p class="device_response">...</p>
                 </div>
@@ -32,17 +35,17 @@
                     <input id="input_sendhex" type="text" placeholder="Raw Hex for debugging, whitespace is okay...">
                     <button id="btn_sendhex" class="btn btn--secondary">Send</button>
                 </div>
-	    </div>
-	</div>
+            </div>
+        </div>
     </div>
 
     <h1>WebAuthn Demonstrator</h1>
-    
+
     <button class="btn" id="btn_webauth_register">Register</button>
     <button class="btn" id="btn_webauth_get">Get Credentials</button>
-    
+
     <h1>Logs</h1>
-    
+
     <div class="control_container">
         <button id="btn_clearlogs" class="btn">Clear Logs</button>
     </div>
@@ -55,4 +58,5 @@
         app.initialize();
     </script>
 </body>
+
 </html>
