@@ -10,28 +10,27 @@
     <h1>Yubikey WebUSB Demonstrator</h1>
     
     <div class="control_container">
-        <button id="btn_request" class="btn">Request Yubikey</button>
-        <button id="btn_requestandgo" class="btn btn--secondary">Request and go to google.com</button>
+        <button id="btn_request" class="btn">Connect to device</button>
+        <button id="btn_requestandgo" class="btn btn--secondary" style="display: none;">Request and go to google.com</button>
     </div>
     
-    <h2>Device</h2>
-    <div class="devices_container">
-        <div class="device">USB</div>
-    </div>
-
-    <div id="modal_device" class="modal_backdrop" style="display: none;">
+    <div id="modal_device" style="display: none;">
         <div class="modal">
             <div class="modal_head">
-                <h3 class="modal_title">Modal content</h3>
-                <button id="btn_closedevice" class="btn btn--borderless">&times;</button>
+                <h2 class="modal_title">Modal content</h2>
             </div>
             <div class="modal_content">   
                 <div class="device_response_container">
                     <p class="device_response">...</p>
                 </div>
                 <div class="device_request_container">
-                    <input id="input_sendhex" type="text" placeholder="Input Hex, whitespace is okay...">
-                    <button id="btn_sendhex" class="btn">Send</button>
+                    <button id="btn_usb_register" class="btn">Register</button>
+                    <button id="btn_usb_get" class="btn">Get Credentials</button>
+                    <button id="btn_closedevice" class="btn btn--secondary">Close Device</button>
+                </div>
+                <div class="device_request_container">
+                    <input id="input_sendhex" type="text" placeholder="Raw Hex for debugging, whitespace is okay...">
+                    <button id="btn_sendhex" class="btn btn--secondary">Send</button>
                 </div>
 	    </div>
 	</div>
@@ -48,15 +47,12 @@
         <button id="btn_clearlogs" class="btn">Clear Logs</button>
     </div>
     <div class="log_container">
-        <div class="log">Sample entry</div>
-        <div class="log error">Sample error</div>
     </div>
 
 
-    <script src="src/lib/base64.js"></script>
-    <script src="src/lib/browser-buffer.js"></script>
-    <script src="src/util.js"></script>
-    <script src="src/index.js"></script>
-    <script src="src/webauth.js"></script>
+    <script type="module">
+        import app from './src/index.js';
+        app.initialize();
+    </script>
 </body>
 </html>

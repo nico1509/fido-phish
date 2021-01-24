@@ -1,9 +1,19 @@
+import util from './util.js';
+import u2f from './u2fhid.js';
+import webauth from './webauth.js';
+
 const devicesContainer = document.querySelector('.devices_container');
 const btn_request = document.getElementById('btn_request');
 const btn_requestandgo = document.getElementById('btn_requestandgo');
-const device_response_container = document.querySelector('.device_response_container');
 const btn_sendhex = document.getElementById('btn_sendhex');
 const input_sendhex = document.getElementById('input_sendhex');
+const btn_closedevice = document.getElementById('btn_closedevice');
+const btn_usb_register = document.getElementById('btn_usb_register');
+const btn_usb_get = document.getElementById('btn_usb_get');
+const btn_webauth_register = document.getElementById('btn_webauth_register');
+const btn_webauth_get = document.getElementById('btn_webauth_get');
+const btn_clearlogs = document.getElementById('btn_clearlogs');
+
 
 window.DEVICE_TYPES = {
     'security-key': {
@@ -28,127 +38,70 @@ window.DEVICE_TYPES = {
 
 window.CURRENT_DEVICE_TYPE = {};
 
-// Show error in unsupported browsers
-if (!navigator.usb) {
-    writeToLogSection('This browser does not support WebUSB, use a chromium-based browser instead.', 'error');
-    //navigator.usb = {};
+async function requestDevice() {
+    let device;
+    try {
+        util.writeToLogSection('Request Devices');
+        device = await navigator.usb.requestDevice({filters: [
+            {
+                // Filter for Touch U2F Security Key
+                vendorId: window.DEVICE_TYPES['security-key'].vendorId, 
+                productId: window.DEVICE_TYPES['security-key'].productId,
+            },
+            {
+                // Filter for Yubikey
+                vendorId: window.DEVICE_TYPES['yubi-key'].vendorId, 
+                productId: window.DEVICE_TYPES['yubi-key'].productId,
+            },
+        ]});
+    } catch (err) {
+        util.writeToLogSection('Request failed: ' + err, 'error');
+        return;
+    }
+
+    if (device === undefined) {
+        util.writeToLogSection('No Device', 'error');
+        return;
+    }
+
+    switch (device.productId) {
+        case 288:
+            window.CURRENT_DEVICE_TYPE = window.DEVICE_TYPES['security-key'];
+            break;
+
+        case 1031:
+            window.CURRENT_DEVICE_TYPE = window.DEVICE_TYPES['yubi-key'];
+            break;
+        
+        default:
+            util.writeToLogSection('Error: Device is neither a Security Key nor YubiKey. Demo will not work.', 'error')
+            break;
+    }
+
+    window.YubiKey = device;
+
+    util.writeToLogSection('Request permitted');
+    showDeviceModal(device);
+
 }
 
-
-// Request device access
-[ btn_request, btn_requestandgo ].forEach( btn => {
-    btn.addEventListener('click', async () => {
-        let device;
-        try {
-            writeToLogSection('Request Devices');
-            device = await navigator.usb.requestDevice({filters: [
-                {
-                    // Filter for Touch U2F Security Key
-                    vendorId: window.DEVICE_TYPES['security-key'].vendorId, 
-                    productId: window.DEVICE_TYPES['security-key'].productId,
-                },
-                {
-                    // Filter for Yubikey
-                    vendorId: window.DEVICE_TYPES['yubi-key'].vendorId, 
-                    productId: window.DEVICE_TYPES['yubi-key'].productId,
-                },
-            ]});
-        } catch (err) {
-            writeToLogSection('Request failed: ' + err, 'error');
-            return;
-        }
-    
-        if (device === undefined) {
-            writeToLogSection('No Device', 'error');
-            return;
-        }
-
-        switch (device.productId) {
-            case 288:
-                window.CURRENT_DEVICE_TYPE = window.DEVICE_TYPES['security-key'];
-                break;
-
-            case 1031:
-                window.CURRENT_DEVICE_TYPE = window.DEVICE_TYPES['yubi-key'];
-                break;
-            
-            default:
-                writeToLogSection('Error: Device is neither a Security Key nor YubiKey. Demo will not work.', 'error')
-                break;
-        }
-    
-        writeToLogSection('Request permitted');
-        listDevices();
-    })
-});
-// Show UI Race Condition
-btn_requestandgo.addEventListener('click', async () => {
-    // FIXME: Some trick needed?
-    setTimeout(() => {
-        window.location.href = 'https://www.google.com';
-    }, 50);
-});
-
-// List accesible devices
-devicesContainer.innerHTML = '';
-async function listDevices() {
-    if (!navigator.usb) return;
-
-    let devices = await navigator.usb.getDevices();
-    devicesContainer.innerHTML = '';
-    devices.forEach(device => {
-        devicesContainer.innerHTML += `<div class="device btn btn--borderless">${device.manufacturerName} :: ${device.productName}</div>`;
-        devicesContainer.lastChild.addEventListener('click', e => {
-            showDeviceModal(device);
-        });
-        btn_sendhex.addEventListener('click', e => {    
-            input_sendhex.value = input_sendhex.value.replace(/\s/g, '');
-            talkToDevice(device, input_sendhex.value);      
-        });
-        [ btn_closedevice, modal_device ].forEach(element => {
-            element.addEventListener('click', async (event) => {
-                device.close().then(() => {
-                    writeToLogSection('Device closed');
-                }).catch(e => {
-                    console.error(e);
-                    writeToLogSection('Cannot close device: ' + e, 'error');
-                });
-            });
-        });
-    });    
-}
-
-// Show Details Modal
+/**
+ * @param {USBDevice} device 
+ */
 async function showDeviceModal(device) {
+    util.clearDeviceSection()
     modal_device.style.display = '';
     modal_device.getElementsByClassName('modal_title')[0].innerHTML = device.productName;
     claimDevice(device).then(async () => {
-        device_response_container.innerHTML += '<p class="device_response">Device claimed</p>';
-        while (true) {
-            let result = await device.transferIn(window.CURRENT_DEVICE_TYPE.endpointNumberIn, 65); // FIXME: 65 is just a guess...
-            if (result.data) {
-                const hexResult = uint8array2hex(new Uint8Array(result.data.buffer));
-                const asciiResult = hex2ascii(hexResult);
-                device_response_container.innerHTML +=`<p class="device_response">Device wrote: ${asciiResult} (${hexResult})</p>`;
-            }
-            if (result.status === 'stall') {
-                console.warn('Endpoint stalled. Clearing.');
-                await device.clearHalt(1);
-            }
-        }
+        util.writeToDeviceSection('Device claimed');
     });
 }
 
-async function talkToDevice(device, hex) {
-    const message = hex2uint8array(hex);
-    device_response_container.innerHTML +=`<p class="device_response">You wrote: ${hex2ascii(hex)} (${hex})</p>`;
-    let outResult = await device.transferOut(window.CURRENT_DEVICE_TYPE.endpointNumberOut, message);
-    window.YubiKeyOutResult = outResult;
-}
-
-// Mess with the device
+/**
+ * @param {USBDevice} device 
+ */
 async function claimDevice(device) {
-    writeToLogSection('Attempting Device Claim');
+    util.writeToLogSection('Attempting Device Claim');
     
     try {
         await device.open().then(() => {
@@ -177,30 +130,122 @@ async function claimDevice(device) {
               });
             });
           });
-	writeToLogSection('Claim Successful' + (device.opened ? ', device opened' : ''), 'success');
+	util.writeToLogSection('Claim Successful' + (device.opened ? ', device opened' : ''), 'success');
     } catch (e) {
-        writeToLogSection('Cannot claim device: ' + e, 'error');
+        util.writeToLogSection('Cannot claim device: ' + e, 'error');
 	console.error(e);
     } finally {
         console.log(device);
-	window.YubiKey = device;
 	return Promise.resolve();
         //device.close();
-        //writeToLogSection('Logged device to console, closing device');
+        //util.writeToLogSection('Logged device to console, closing device');
     }
 }
 
-// Events
-navigator.usb.addEventListener('connect', async ({device}) => {
-    writeToLogSection(`Connected ${device.productName}`);
-    listDevices();
-});
-navigator.usb.addEventListener('disconnect', async ({device}) => {
-    writeToLogSection(`Disconnected ${device.productName}`);
-    listDevices();
-});
+/**
+ * @param {USBDevice} device 
+ */
+async function closeDevice(device) {
+    util.hideDeviceModal();
+    device.close().then(() => {
+        util.writeToLogSection('Device closed');
+    }).catch(e => {
+        console.error(e);
+        util.writeToLogSection('Cannot close device: ' + e, 'error');
+    });
+
+    delete window.YubiKey;
+}
+
+function initialize() {
+    // Show error in unsupported browsers
+    if (!navigator.usb) {
+        util.writeToLogSection('This browser does not support WebUSB, use a chromium-based browser instead.', 'error');
+        //navigator.usb = {};
+    }
+
+    // Buttons
+    btn_request.addEventListener('click', async () => {
+        if (window.YubiKey) {
+            closeDevice(window.YubiKey);
+        }
+        requestDevice();
+    });    
+
+    btn_requestandgo.addEventListener('click', async () => {
+        // FIXME: Some trick needed?
+        setTimeout(() => {
+            window.location.href = 'https://www.google.com';
+        }, 50);
+    });
 
 
-// Initialize
-clearLogs();
-listDevices();
+    btn_sendhex.addEventListener('click', e => {
+        if (!window.YubiKey) return;
+
+        input_sendhex.value = input_sendhex.value.replace(/\s/g, '');
+        util.writeToDeviceSection(`You wrote: ${input_sendhex.value} (${util.hex2ascii(input_sendhex.value)})`);
+        u2f.talkToDevice(window.YubiKey, input_sendhex.value).then(hex => {
+            util.writeToDeviceSection(`Device wrote: ${hex} (${util.hex2ascii(hex)})`);
+        });      
+    });
+
+    btn_closedevice.addEventListener('click', async (event) => {
+        if (window.YubiKey) {
+            closeDevice(window.YubiKey);
+        }
+    });
+
+    btn_usb_register.addEventListener('click', async (event) => {
+        if (!window.YubiKey) return;
+        u2f.u2f_msg_register(window.YubiKey).then(r => {
+            util.writeToDeviceSection('Register Response: ' + r);
+        });
+    });
+
+    btn_usb_get.addEventListener('click', async (event) => {
+        if (!window.YubiKey) return;
+        u2f.u2f_msg_authenticate(window.YubiKey).then(r => {
+            util.writeToDeviceSection('Authenticate Response: ' + r);
+        });
+    });
+
+    btn_webauth_get.addEventListener('click', async (e) => {
+        util.writeToLogSection('Request Key Authentication...');
+        webauth.get().then(() => {
+            util.writeToLogSection('Key authenticated', 'success');
+        }).catch(e => {
+            util.writeToLogSection(e, 'error');
+        });
+    });
+
+    btn_webauth_register.addEventListener('click', async (e) => {
+        util.writeToLogSection('Request Key Registration...');
+        webauth.register().then(id => {
+            util.writeToLogSection('Key registered, ID: ' + id, 'success');
+        }).catch(e => {
+            util.writeToLogSection(e, 'error');
+        });
+    });
+
+    btn_clearlogs.addEventListener('click', async (event) => {
+        util.clearLogs();
+    });
+
+
+
+    // Events
+    navigator.usb.addEventListener('connect', async ({ device }) => {
+        util.writeToLogSection(`Connected ${device.productName}`);
+    });
+    navigator.usb.addEventListener('disconnect', async ({ device }) => {
+        util.writeToLogSection(`Disconnected ${device.productName}`)
+        util.hideDeviceModal();
+    });
+
+    util.clearLogs();
+}
+
+export default {
+    initialize: initialize,
+};
