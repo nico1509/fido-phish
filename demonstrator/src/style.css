@@ -24,7 +24,6 @@ body {
 }
 
 .modal {
-    max-height: 50vh;
     background-color: white;
     overflow-y: auto;
 }
@@ -41,6 +40,10 @@ body {
 }
 
 .device_request_container {
+    margin-bottom: 16px;
+}
+
+.device_debug_container {
     display: flex;
     justify-content: start;
     margin-bottom: 16px;
