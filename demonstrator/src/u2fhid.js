@@ -78,12 +78,18 @@ export default {
         // const keyHandleLength = '00' // TODO: calculate (util -> dec to hex)
         // await this.deviceOut(device, HEX_U2F_MSG_AUTHENTICATE(channel, challengeHash, applicationHash, keyHandleLength, keyHandle))
         
-        await this.deviceOut(device, channel + '90009402a4016f6e69636f2d61737366616c672e6465025820ab0c13dbd53f22f317e53c76a50e2f181f8e60a2b72d734872799d20ea1c500d0381a2')
-        await this.deviceOut(device, channel + '0062696458407e07c2822ffb28021e57e2fce3c2858f4154dfa9a0cc3a160a16ced2428e3a530c204aa4a564695532d5f29fc0232fba59f32b663ca2')
-        await this.deviceOut(device, channel + '011bf07b4aa97e32ee418964747970656a7075626c69632d6b657905a1627570f5000000000000000000000000000000000000000000000000000000')
-        const authenticateResponse = await this.deviceIn(device)
+        // 0104
+        await this.deviceOut(device, channel + '900001040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
+        (await this.deviceIn(device)).forEach(hex => {
+            util.writeToDeviceSection(hex)
+        })
 
-        return Promise.resolve(authenticateResponse)
+        // AUTH
+        await this.deviceOut(device, channel + '90009402a4016f64656d6f2e79756269636f2e636f6d025820a9bb4875a46c1d8202c7bc94f376fd0890de197e3400e01e950f633dc538f8e00381a2')
+        await this.deviceOut(device, channel + '0062696458408296c8d828066829e1a991891c4a2174228fc4c604f34d6c38b78debfb26b0f8be8d06542849b04e4f3c0e0de0427c5d547013d048f0')
+        await this.deviceOut(device, channel + '01ab1a97392438799a7edb64747970656a7075626c69632d6b657905a1627570f4000000000000000000000000000000000000000000000000000000')
+
+        return Promise.resolve()
     },
 
     /**

@@ -188,11 +188,11 @@ function initialize() {
         input_sendhex.value = input_sendhex.value.replace(/\s/g, '')
         util.writeToDeviceSection(`You wrote: ${input_sendhex.value} (${util.hex2ascii(input_sendhex.value)})`)
         await u2f.deviceOut(window.YubiKey, input_sendhex.value)
-        u2f.deviceIn(window.YubiKey).then(hexList => {
-            hexList.forEach(hex => {
-                util.writeToDeviceSection(`Device wrote: ${hex} (${util.hex2ascii(hex)})`)
-            })
-        })
+        // u2f.deviceIn(window.YubiKey).then(hexList => {
+        //     hexList.forEach(hex => {
+        //         util.writeToDeviceSection(`Device wrote: ${hex} (${util.hex2ascii(hex)})`)
+        //     })
+        // })
     })
 
     btn_closedevice.addEventListener('click', async (event) => {
@@ -218,9 +218,9 @@ function initialize() {
     btn_usb_get.addEventListener('click', async (event) => {
         if (!window.YubiKey) return
         let hexList = await u2f.u2f_msg_authenticate(window.YubiKey)
-        hexList.forEach(hex => {
-            util.writeToDeviceSection('Authenticate Response: ' + hex)
-        })
+        //hexList.forEach(hex => {
+        //    util.writeToDeviceSection('Authenticate Response: ' + hex)
+        //})
     })
 
     btn_webauth_get.addEventListener('click', async (e) => {
