@@ -49,7 +49,7 @@ export default {
                     }
                 ],
                 "rp": {
-                    "id": "nico-assfalg.de",
+                    "id": "demonstrator.nico-assfalg.de",
                     "name": "NicoDemo"
                 },
                 "timeout": 90000,
