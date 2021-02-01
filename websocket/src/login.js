@@ -24,15 +24,15 @@ const performApiRequest = async (url, requestData) => {
 module.exports = {}
 
 /**
- * @param {string} user 
+ * @param {string} username 
  * @param {string} password 
  * 
  * @returns {Promise<LoginResponse>}
  */
-module.exports.login = async (user, password) => {
+module.exports.login = async (username, password) => {
     /** @type {LoginRequest} */
     const loginData = {
-        username: user,
+        username: username,
         password: password,
         namespace: APP_NAMESPACE,
     }

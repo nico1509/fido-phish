@@ -1,0 +1,18 @@
+# Websocket Yubico-Login
+
+Yubico-Demo Anfragen über eine Websocket auslösen.
+
+## Benutzung
+### lokal
+- Vor dem ersten Start: `npm install`
+- Zum starten: `npm start`, dann verbinden mit `ws://localhost:8081` (z.B. mit wscat)
+### Web
+- Verbinden mit `wss://websocket.nico-assfalg.de/ws`
+
+## Beispielanfrage
+- Mit `_action` die gewünschte Aktion angeben (`login`, `auth-begin`, `auth-finish`)
+- Restliche Parameter analog zur Yubico-Demo (siehe Protokoll) 
+- Antwort kommt bei korrekter Anfrage direkt von Yubico
+```json
+{"_action":"login", "username": "kitfido", "password": "kitfido"}
+```
