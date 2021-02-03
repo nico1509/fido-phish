@@ -1,6 +1,7 @@
 const modal_device = document.getElementById('modal_device')
 const logContainer = document.querySelector('.log_container')
-const device_response_container = document.querySelector('.device_response_container')
+const device_response_container = document.getElementById('device_response_container')
+const websocket_response_container = document.getElementById('websocket_response_container')
 
 function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -35,6 +36,19 @@ export default {
 
     hideDeviceModal() {
         modal_device.style.display = 'none'
+    },
+
+    clearWebsocketSection() {
+        websocket_response_container.innerHTML = ''
+    },
+
+    /**
+     * @param {string} message - Write this message to log
+     * @param {string} error - Add this class/es to the log message
+     */
+    writeToWebsocketSection(message = '', error = '') {
+        const classes = `log ${error}`
+        websocket_response_container.innerHTML += `<pre class="${classes}">${new Date()}<br>${message}</pre>`
     },
 
     /**

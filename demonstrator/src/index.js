@@ -13,6 +13,11 @@ const btn_usb_get = document.getElementById('btn_usb_get')
 const btn_webauth_register = document.getElementById('btn_webauth_register')
 const btn_webauth_get = document.getElementById('btn_webauth_get')
 const btn_clearlogs = document.getElementById('btn_clearlogs')
+const input_urlwebsocket = document.getElementById('input_urlwebsocket')
+const btn_connectwebsocket = document.getElementById('btn_connectwebsocket')
+const input_sendwebsocket = document.getElementById('input_sendwebsocket')
+const btn_sendwebsocket = document.getElementById('btn_sendwebsocket')
+const span_connected = document.getElementById('span_connected')
 
 
 window.DEVICE_TYPES = {
@@ -37,6 +42,11 @@ window.DEVICE_TYPES = {
 }
 
 window.CURRENT_DEVICE_TYPE = {}
+
+/**
+ * @type {WebSocket}
+ */
+window.YubiWebSocket = {}
 
 async function requestDevice() {
     let device
@@ -243,6 +253,35 @@ function initialize() {
 
     btn_clearlogs.addEventListener('click', async (event) => {
         util.clearLogs()
+    })
+
+    btn_connectwebsocket.addEventListener('click', () => {
+        if (!input_urlwebsocket.value) {
+            return
+        }
+        const ws = new WebSocket(input_urlwebsocket.value)
+        ws.onclose = () => {
+            span_connected.innerText = '❌'
+        }
+        ws.onopen = () => {
+            util.clearWebsocketSection()
+            span_connected.innerText = '✔'
+        } 
+        ws.onmessage = ({ data }) => {
+            util.writeToWebsocketSection('<= ' + data)
+        }
+        window.YubiWebSocket = ws
+    })
+
+    btn_sendwebsocket.addEventListener('click', () => {
+        if (!window.YubiWebSocket.OPEN) {
+            return
+        }
+        if (!input_sendwebsocket.value) {
+            return
+        }
+        util.writeToWebsocketSection(`=> ${input_sendwebsocket.value}`)
+        window.YubiWebSocket.send(input_sendwebsocket.value)
     })
 
 

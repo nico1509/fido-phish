@@ -49,7 +49,7 @@ body {
     margin-bottom: 16px;
 }
 
-#input_sendhex {
+.modal_input {
     width: 100%;
 }
 

@@ -37,12 +37,10 @@ const doAction = async (data = {}) => {
 
 wss.on('connection', function connection(ws) {
 
-  const respond = (data = {}, success = true, message = 'ok') => {
+  const respond = (data = {}, success = true, message = {message: 'ok'}) => {
     const response = JSON.stringify({
       status: success ? 'success' : 'error',
-      message: {
-        message: message
-      },
+      message: message,
       data: data,
     }, null, 1)
     console.log('> "%s"', response)
@@ -52,7 +50,7 @@ wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
     const data = parseData(message)
     if (typeof data === 'string') {
-      respond(data, false, 'received string or malformed JSON')
+      respond(data, false, { message: 'received string or malformed JSON'})
       return
     }
     console.log('< "%s"', JSON.stringify(data))
