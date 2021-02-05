@@ -48,7 +48,7 @@ export default {
      */
     writeToWebsocketSection(message = '', error = '') {
         const classes = `log ${error}`
-        websocket_response_container.innerHTML += `<pre class="${classes}">${new Date()}<br>${message}</pre>`
+        websocket_response_container.innerHTML += `<pre class="${classes}">${new Date()}<br><b>${message}</b></pre>`
     },
 
     /**
