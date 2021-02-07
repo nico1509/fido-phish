@@ -10,13 +10,20 @@ const APP_NAMESPACE = 'playground'
 /**
  * @param {string} url 
  * @param {Object} requestData
+ * @param {string} cookies - e.g. "key=value; key2=value2"
  * 
  * @returns {Promise<YubicoResponse>}
  */
-const performApiRequest = async (url, requestData) => {
-    const { status, data } = await axios.post(url, requestData, { validateStatus: null })
+const performApiRequest = async (url, requestData, cookies = 'cookie_notice_approved=true') => {
+    const { status, data, headers } = await axios.post(url, requestData, {
+        validateStatus: null,
+        headers: { cookie: cookies },
+    })
     if (status != 200) {
         return Promise.reject(data)
+    }
+    if (headers['set-cookie']) {
+        data._cookies = headers['set-cookie']
     }
     return data
 }
@@ -44,13 +51,13 @@ module.exports.login = async (username, password) => {
  * 
  * @returns {Promise<AuthBeginResponse>}
  */
-module.exports.authenticateBegin = async (uuid) => {
+module.exports.authenticateBegin = async (uuid, _cookie) => {
     /** @type {AuthBeginRequest} */
     const authBeginData = {
         namespace: APP_NAMESPACE,
         uuid: uuid,
     }
-    return await performApiRequest(API_BASE + API_AUTH_BEGIN, authBeginData)
+    return await performApiRequest(API_BASE + API_AUTH_BEGIN, authBeginData, _cookie)
 }
 
 /**
@@ -63,7 +70,7 @@ module.exports.authenticateBegin = async (uuid) => {
  * 
  * @returns {Promise<AuthFinishResponse>}
  */
-module.exports.authenticateFinish = async (authenticatorData, clientDataJSON, credentialId, signature, requestId, uuid) => {
+module.exports.authenticateFinish = async (authenticatorData, clientDataJSON, credentialId, signature, requestId, uuid, _cookie) => {
     /** @type {AuthFinishRequest} */
     const authFinishData = {
         assertion: {
@@ -76,5 +83,5 @@ module.exports.authenticateFinish = async (authenticatorData, clientDataJSON, cr
         requestId: requestId,
         uuid: uuid,
     }
-    return await performApiRequest(API_BASE + API_AUTH_FINISH, authFinishData)
+    return await performApiRequest(API_BASE + API_AUTH_FINISH, authFinishData, _cookie)
 }

@@ -14,10 +14,10 @@ const parseData = (data) => {
 const doAction = async (data = {}) => {
   switch (data._action) {
     case 'login':
-      return login.login(data.user || '', data.password || '')
+      return login.login(data.username || '', data.password || '')
 
     case 'auth-begin':
-      return login.authenticateBegin(data.uuid || '')
+      return login.authenticateBegin(data.uuid || '', data._cookie || '')
 
 
     case 'auth-finish':
@@ -27,7 +27,8 @@ const doAction = async (data = {}) => {
         data.credentialId || '',
         data.signature || '',
         data.requestId || '',
-        data.uuid || ''
+        data.uuid || '',
+        data._cookie || ''
       )
 
     default:
@@ -35,7 +36,13 @@ const doAction = async (data = {}) => {
   }
 }
 
-wss.on('connection', function connection(ws) {
+let connectionNumber = 0;
+
+wss.on('connection', (ws, req) => {
+
+  const thisConnectionNumber = ++connectionNumber
+
+  console.log('<(%i) New Connection from "%s"', thisConnectionNumber, req.headers.forwarded || req.connection.remoteAddress)
 
   const respond = (data = {}, success = true, message = {message: 'ok'}) => {
     const response = JSON.stringify({
@@ -43,7 +50,7 @@ wss.on('connection', function connection(ws) {
       message: message,
       data: data,
     }, null, 1)
-    console.log('> "%s"', response)
+    console.log('(%i)> "%s"', thisConnectionNumber, response)
     ws.send(response)
   }
 
@@ -53,7 +60,7 @@ wss.on('connection', function connection(ws) {
       respond(data, false, { message: 'received string or malformed JSON'})
       return
     }
-    console.log('< "%s"', JSON.stringify(data))
+    console.log('<(%i) "%s"', thisConnectionNumber, JSON.stringify(data))
 
     doAction(data).then(response => {
       respond(response)
@@ -62,4 +69,17 @@ wss.on('connection', function connection(ws) {
     })
   })
 
+  ws.on('pong', (data) => {
+    //console.log('<(%i) pong', thisConnectionNumber)
+    setTimeout(() => {
+      ws.ping()
+      //console.log('(%i)> ping', thisConnectionNumber)
+    }, 5000);
+  })
+  ws.ping()
+
+  ws.on('close', () => {
+    console.log('<(%i) Connection closed', thisConnectionNumber)
+  })
+  
 })

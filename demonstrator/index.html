@@ -53,8 +53,14 @@
                     <p class="device_response">...</p>
                 </div>
                 <div class="device_debug_container">
-                    <input id="input_sendwebsocket" class="modal_input" type="text" placeholder="Send stuff to Websocket">
+                    <textarea id="input_sendwebsocket" class="modal_input" placeholder="Send stuff to Websocket" rows="10"></textarea>
                     <button id="btn_sendwebsocket" class="btn btn--secondary">Send</button>
+                </div>
+                <div class="websocket_templates">
+                    <p>Kopiervorlagen:</p>
+                    <pre>Login: {"_action": "login", "username":"kitfido","password":"kitfido","namespace":"playground"}</pre><br>
+                    <pre>Authenticate-Begin: {"_action": "auth-begin", "_cookie": "demo_website_session=[SESSIONID]", "uuid":"[UUID]", "namespace":"playground"}</pre><br>
+                    <pre>Authenticate-Finish: {"_action": "login", "_cookie": "demo_website_session=[SESSIONID]", "requestId":"[REQUESTID]", "assertion": {"credentialId":"[CRED_ID]", "authenticatorData":"[AUTH_DATA]", "clientDataJSON":"[CLIENT_DATA_JSON]", "signature":"[SIGNATURE]"}, "uuid":"[UUID]", "namespace":"playground"}</pre><br>
                 </div>
             </div>
         </div>

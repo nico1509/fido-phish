@@ -11,8 +11,9 @@ Yubico-Demo Anfragen über eine Websocket auslösen.
 
 ## Beispielanfrage
 - Mit `_action` die gewünschte Aktion angeben (`login`, `auth-begin`, `auth-finish`)
+- Mit `_cookie` beliebige Cookies mitsenden (`"demo_website_session=[SESSIONID]"` notwendig für `auth-begin` und `auth-finish`)
 - Restliche Parameter analog zur Yubico-Demo (siehe Protokoll) 
-- Antwort kommt bei korrekter Anfrage direkt von Yubico
-```json
+```jsonc
 {"_action":"login", "username": "kitfido", "password": "kitfido"}
 ```
+&rightarrow; Antwort kommt bei korrekter Anfrage direkt von Yubico (siehe Protokoll)

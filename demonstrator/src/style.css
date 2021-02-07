@@ -49,6 +49,11 @@ body {
     margin-bottom: 16px;
 }
 
+.websocket_templates {
+    width: 100%;
+    overflow-x: scroll;
+}
+
 .modal_input {
     width: 100%;
 }
