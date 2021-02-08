@@ -85,7 +85,9 @@ export default {
         })
 
         // AUTH
-        await this.deviceOut(device, channel + '90003602A2016f64656d6f2e79756269636f2e636f6d025820243CF8BA6648CFF8D1D9A96820C8D9B95A10A1BB35C813D30304491020966D92000000')
+        await this.deviceOut(device, channel + '90009402A4016F64656D6F2E79756269636F2E636F6D025820A9BB4875A46C1D8202C7BC94F376FD0890DE197E3400E01E950F633DC538F8E00381A2');
+        await this.deviceOut(device, channel + '006269645840BE1100C35FF0D5C1969DF758D78D84E5BD1852E7ABFB436DEF3895B0F0F4F4366BB458B0EF7660E661CD7C99D1DB53A14C26FE4E953E');
+        await this.deviceOut(device, channel + '01F593A3E2F0677A024DD564747970656A7075626C69632D6B657905A1627570F4000000000000000000000000000000000000000000000000000000');
 
         return Promise.resolve()
     },
@@ -114,7 +116,7 @@ export default {
             const numberOfInRequired = Math.floor(payloadLengthToCome / (MAX_MESSAGE_LENGTH - U2FHID_CONT_PREFIX_LENGTH)) + 1
             for (let i = 0; i < numberOfInRequired; i++) {
                 const continuedResult = await device.transferIn(window.CURRENT_DEVICE_TYPE.endpointNumberIn, 64)
-                inResultParts.push(util.uint8array2hex(new Uint8Array(continuedResult.data.buffer)))
+                inResultParts[0] += util.uint8array2hex(new Uint8Array(continuedResult.data.buffer)).slice(10)
             }
         }
 
