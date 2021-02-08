@@ -9,12 +9,26 @@
 </head>
 
 <body>
+<div class="header">
     <h1>Yubikey WebUSB Demonstrator</h1>
+</div>
+
+<div class="content">
+
+    <h2>Sign in</h1>
+
+    <div class="login">
+        <label for="input_username">Username</label>
+        <input type="text" name="username" id="input_username"><br>
+        <label for="input_password">Password</label>
+        <input type="password" name="password" id="input_password"><br><br>
+    </div>
 
     <div class="control_container">
         <button id="btn_request" class="btn">Connect to device</button>
-        <button id="btn_requestandgo" class="btn btn--secondary" style="display: none;">Request and go to
-            google.com</button>
+        <button id="btn_login" class="btn login__btn">Login</button>
+        <i style="color: red;">Work in Progress, bitte nicht auf Login klicken ;-)</i>
+        <button id="btn_requestandgo" class="btn btn--secondary" style="display: none;">Request and go to google.com</button>
     </div>
 
     <div id="modal_device" style="display: none;">
@@ -28,12 +42,12 @@
                 </div>
                 <div class="device_request_container">
                     <button id="btn_usb_get" class="btn">Authenticate</button>
-                    <button id="btn_usb_register" class="btn btn--secondary">Get Response after touch</button>
+                    <button id="btn_usb_register" class="btn btn">Await Response</button>
                     <button id="btn_closedevice" class="btn btn--secondary">Close Device</button>
                 </div>
                 <div class="device_debug_container">
                     <input id="input_sendhex" class="modal_input" type="text" placeholder="Raw Hex for debugging, whitespace is okay...">
-                    <button id="btn_sendhex" class="btn btn--secondary">Send</button>
+                    <button id="btn_sendhex" class="btn">Send</button>
                 </div>
             </div>
         </div>
@@ -47,37 +61,32 @@
             <div class="modal_content">
                 <div class="device_debug_container">
                     <input id="input_urlwebsocket" class="modal_input" type="text" placeholder="Enter WS URL" value="wss://websocket.nico-assfalg.de/ws">
-                    <button id="btn_connectwebsocket" class="btn btn--secondary">Connect</button>
+                    <button id="btn_connectwebsocket" class="btn">Connect</button>
                 </div>
                 <div id="websocket_response_container" class="device_response_container">
                     <p class="device_response">...</p>
                 </div>
                 <div class="device_debug_container">
                     <textarea id="input_sendwebsocket" class="modal_input" placeholder="Send stuff to Websocket" rows="10"></textarea>
-                    <button id="btn_sendwebsocket" class="btn btn--secondary">Send</button>
-                </div>
-                <div class="websocket_templates">
-                    <p>Kopiervorlagen:</p>
-                    <pre>Login: {"_action": "login", "username":"kitfido","password":"kitfido","namespace":"playground"}</pre><br>
-                    <pre>Authenticate-Begin: {"_action": "auth-begin", "_cookie": "demo_website_session=[SESSIONID]", "uuid":"[UUID]", "namespace":"playground"}</pre><br>
-                    <pre>Authenticate-Finish: {"_action": "login", "_cookie": "demo_website_session=[SESSIONID]", "requestId":"[REQUESTID]", "assertion": {"credentialId":"[CRED_ID]", "authenticatorData":"[AUTH_DATA]", "clientDataJSON":"[CLIENT_DATA_JSON]", "signature":"[SIGNATURE]"}, "uuid":"[UUID]", "namespace":"playground"}</pre><br>
+                    <button id="btn_sendwebsocket" class="btn">Send</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <h1>WebAuthn Demonstrator</h1>
+    <h2>WebAuthn Demonstrator</h2>
 
     <button class="btn" id="btn_webauth_register">Register</button>
     <button class="btn" id="btn_webauth_get">Get Credentials</button>
 
-    <h1>Logs</h1>
+    <h2>Logs</h2>
 
     <div class="control_container">
         <button id="btn_clearlogs" class="btn">Clear Logs</button>
     </div>
     <div class="log_container">
     </div>
+</div>
 
 
     <script type="module">
