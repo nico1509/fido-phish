@@ -7,7 +7,8 @@ interface WebauthCredential {
 
 interface YubicoResponse {
     data: any,
-    status: ResponseStatus
+    status: ResponseStatus,
+    _cookie: string
 }
 
 interface YubicoUser {
