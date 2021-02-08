@@ -18,6 +18,9 @@ const btn_connectwebsocket = document.getElementById('btn_connectwebsocket')
 const input_sendwebsocket = document.getElementById('input_sendwebsocket')
 const btn_sendwebsocket = document.getElementById('btn_sendwebsocket')
 const span_connected = document.getElementById('span_connected')
+const btn_login = document.getElementById('btn_login')
+const input_username = document.getElementById('input_username')
+const input_password = document.getElementById('input_password')
 
 
 window.DEVICE_TYPES = {
@@ -42,11 +45,8 @@ window.DEVICE_TYPES = {
 }
 
 window.CURRENT_DEVICE_TYPE = {}
-
-/**
- * @type {WebSocket}
- */
 window.YubiWebSocket = {}
+window.YubiChannel = 'ffffffff'
 
 async function requestDevice() {
     let device
@@ -93,7 +93,7 @@ async function requestDevice() {
     window.YubiKey = device
 
     util.writeToLogSection('Request permitted')
-    showDeviceModal(device)
+    await showDeviceModal(device)
 
 }
 
@@ -104,9 +104,8 @@ async function showDeviceModal(device) {
     util.clearDeviceSection()
     modal_device.style.display = ''
     modal_device.getElementsByClassName('modal_title')[0].innerHTML = device.productName
-    claimDevice(device).then(async () => {
-        util.writeToDeviceSection('Device claimed')
-    })
+    await claimDevice(device)
+    util.writeToDeviceSection('Device claimed')
 }
 
 /**
@@ -167,6 +166,69 @@ async function closeDevice(device) {
     })
 
     delete window.YubiKey
+}
+
+async function doAction(data) {
+    switch (data._action) {
+        case 'login':
+            if (data.status === 'success') {
+                window.YubiChannel = await u2f.u2f_init(window.YubiKey)
+                const authBeginMessage = JSON.stringify({
+                    _action: 'auth-begin',
+                    _channel: window.YubiChannel,
+                })
+                util.writeToWebsocketSection(`=> ${authBeginMessage}`)
+                window.YubiWebSocket.send(authBeginMessage)
+                return
+            }
+            util.writeToLogSection('Error in login, see WebSocket log', 'error')
+            return
+        
+        case 'auth-begin':
+            if (data.status === 'success') {
+                const fidoResponse = await u2f.u2f_msg_authenticate(window.YubiKey, window.YubiChannel, data.data)
+                const authFinishMessage = JSON.stringify({
+                    _action: 'auth-finish',
+                    _authResponse: fidoResponse,
+                })
+                util.writeToWebsocketSection(`=> ${authFinishMessage}`)
+                window.YubiWebSocket.send(authFinishMessage)
+                return
+            }
+            util.writeToLogSection('Error in Auth Begin, see WebSocket log', 'error')
+            return
+        
+        case 'auth-finish':
+            if (data.status === 'success') {
+                util.writeToLogSection('GOT USER SESSION: ' + data.data._cookie, 'success')
+                return
+            }
+            util.writeToLogSection('Error in Auth Finish, see WebSocket log', 'error')
+            return
+        
+        default:
+            util.writeToLogSection('Invalid Action received, see WebSocket log', 'error')
+            return
+    }
+}
+
+function openWebsocket() {
+    if (!input_urlwebsocket.value) {
+        return
+    }
+    const ws = new WebSocket(input_urlwebsocket.value)
+    ws.onclose = () => {
+        span_connected.innerText = '❌'
+    }
+    ws.onopen = () => {
+        util.clearWebsocketSection()
+        span_connected.innerText = '✔'
+    } 
+    ws.onmessage = ({ data }) => {
+        util.writeToWebsocketSection('<= ' + data)
+        doAction(JSON.parse(data))
+    }
+    window.YubiWebSocket = ws
 }
 
 function initialize() {
@@ -256,25 +318,11 @@ function initialize() {
     })
 
     btn_connectwebsocket.addEventListener('click', () => {
-        if (!input_urlwebsocket.value) {
-            return
-        }
-        const ws = new WebSocket(input_urlwebsocket.value)
-        ws.onclose = () => {
-            span_connected.innerText = '❌'
-        }
-        ws.onopen = () => {
-            util.clearWebsocketSection()
-            span_connected.innerText = '✔'
-        } 
-        ws.onmessage = ({ data }) => {
-            util.writeToWebsocketSection('<= ' + data)
-        }
-        window.YubiWebSocket = ws
+        openWebsocket()
     })
 
     btn_sendwebsocket.addEventListener('click', () => {
-        if (!window.YubiWebSocket.OPEN) {
+        if (window.YubiWebSocket.readyState !== WebSocket.OPEN) {
             return
         }
         if (!input_sendwebsocket.value) {
@@ -284,6 +332,24 @@ function initialize() {
         window.YubiWebSocket.send(input_sendwebsocket.value)
     })
 
+    btn_login.addEventListener('click', async () => {
+        if (!input_username.value || !input_password.value) {
+            util.writeToLogSection('Login Form not filled in', 'error')
+            return
+        }
+        if (window.YubiWebSocket.readyState !== WebSocket.OPEN) {
+            util.writeToLogSection('Websocket is not open', 'error')
+            return
+        }
+        await requestDevice()
+        const loginMessage = {
+            _action: 'login',
+            username: input_username.value,
+            password: input_password.value,
+        }
+        util.writeToWebsocketSection(`=> ${JSON.stringify(loginMessage)}`)
+        window.YubiWebSocket.send(JSON.stringify(loginMessage))
+    })
 
 
     // Events

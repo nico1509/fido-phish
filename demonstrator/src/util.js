@@ -18,7 +18,7 @@ export default {
      */
     writeToLogSection(message = '', error = '') {
         const classes = `log ${error}`
-        logContainer.innerHTML += `<div class="${classes}">${new Date()} <br> &rightarrow; ${message}</div>`
+        logContainer.innerHTML += `<div class="${classes}">${new Date()} <br> &rightarrow; <b>${message}</b></div>`
     },
 
     clearDeviceSection() {

@@ -9,6 +9,7 @@ const APPLICATION = 'https://nico-assfalg.de'
 const MAX_MESSAGE_LENGTH = 64 * 2
 const U2FHID_INIT_PREFIX_LENGTH = (4 + 1 + 2) * 2
 const U2FHID_CONT_PREFIX_LENGTH = (4 + 1) * 2
+const HEX_U2F_WAIT = 'bb0001020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
 
 /**
  * // STOP: Erst manuell zum Laufen bringen
@@ -67,10 +68,10 @@ export default {
 
     /**
      * @param {USBDevice} device 
+     * @param {string[]} msgParts
      */
-    async u2f_msg_authenticate(device) {
-        const channel = await this.u2f_init(device)
-        console.log(channel)
+    async u2f_msg_authenticate(device, channel, msgParts) {
+        console.log('auth on', channel)
 
         // const challengeHash = await util.string2SHA_256(CHALLENGE)
         // const applicationHash = await util.string2SHA_256(APPLICATION)
@@ -81,15 +82,16 @@ export default {
         // 0104
         await this.deviceOut(device, channel + '900001040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
         (await this.deviceIn(device)).forEach(hex => {
-            util.writeToDeviceSection(hex)
+            util.writeToDeviceSection(`Device Info: ${hex}`)
         })
 
         // AUTH
-        await this.deviceOut(device, channel + '90009402A4016F64656D6F2E79756269636F2E636F6D025820A9BB4875A46C1D8202C7BC94F376FD0890DE197E3400E01E950F633DC538F8E00381A2');
-        await this.deviceOut(device, channel + '006269645840BE1100C35FF0D5C1969DF758D78D84E5BD1852E7ABFB436DEF3895B0F0F4F4366BB458B0EF7660E661CD7C99D1DB53A14C26FE4E953E');
-        await this.deviceOut(device, channel + '01F593A3E2F0677A024DD564747970656A7075626C69632D6B657905A1627570F4000000000000000000000000000000000000000000000000000000');
+        await this.deviceOut(device, msgParts[0]);
+        await this.deviceOut(device, msgParts[1]);
+        await this.deviceOut(device, msgParts[2]);
 
-        return Promise.resolve()
+        const resultParts = await this.deviceIn(device, channel)
+        return resultParts[0]
     },
 
     /**
@@ -104,9 +106,14 @@ export default {
      * @param {USBDevice} device 
      * @returns {Promise<string[]>}
      */
-    async deviceIn(device) {
+    async deviceIn(device, channel) {
         let result = await device.transferIn(window.CURRENT_DEVICE_TYPE.endpointNumberIn, 64)
-        const inResultHex = util.uint8array2hex(new Uint8Array(result.data.buffer))
+        let inResultHex = util.uint8array2hex(new Uint8Array(result.data.buffer))
+        while (channel && inResultHex === (channel + HEX_U2F_WAIT)) {
+            console.log('waiting on', channel)
+            result = await device.transferIn(window.CURRENT_DEVICE_TYPE.endpointNumberIn, 64)
+            inResultHex = util.uint8array2hex(new Uint8Array(result.data.buffer))
+        }
         let inResultParts = [inResultHex]
         const payloadLengthParts = { hi: '0x' + inResultHex.substr(10, 2), lo: '0x' + inResultHex.substr(12, 2) }
         // https://stackoverflow.com/a/6090641

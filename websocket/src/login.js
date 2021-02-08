@@ -28,8 +28,6 @@ const performApiRequest = async (url, requestData, cookies = 'cookie_notice_appr
     return data
 }
 
-module.exports = {}
-
 /**
  * @param {string} username 
  * @param {string} password 
