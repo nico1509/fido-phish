@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
+    "cbor": "^6.0.1",
     "ws": "^7.4.2"
   },
   "devDependencies": {
