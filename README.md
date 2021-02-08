@@ -1,4 +1,4 @@
-# yubikey-webusb
+# fido-phish
 Demonstrator code written for the KASTEL Security Seminar @ KIT in 2021.
 
 We show that it was possible to phish a login with a YubiKey using WebUSB until Google denied HID access on WebUSB.
